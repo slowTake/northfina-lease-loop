@@ -1,12 +1,13 @@
 // The demo panel (D-058): run each scenario card from its starting point, see the rules in force on
-// the demo date, and reach the back office, the live contracts and the audit trail. Read-only: it
-// only sets the demo date and links to the pages where each card runs. It never shows a result.
+// the demo date, and reach the back office, the live contracts and the audit trail. It sets the
+// demo date and opens the page where each card runs; a card with a preset makes its quote on the
+// way, like Get my quote, and opens it filled in, waiting for Sign (D-059). It never shows a result.
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { connection } from 'next/server';
 import { DemoRules } from '@/components/demo-rules';
-import { DemoRunButton } from '@/components/demo-run-button';
+import { DemoRunButton, type DemoPrepare } from '@/components/demo-run-button';
 import { loadCustomers } from '@/data/load';
 import {
   DEMO_SCENARIOS,
@@ -238,6 +239,7 @@ function ScenarioCard({
             <div key={index} className="flex flex-col items-start gap-2">
               <StepAction
                 step={step}
+                demo={`${scenario.card}-${index + 1}`}
                 label={single ? t('demo.run') : t(key(`step${index + 1}`))}
                 panel={panel}
                 locale={locale}
@@ -263,12 +265,15 @@ function ScenarioCard({
 
 function StepAction({
   step,
+  demo,
   label,
   panel,
   locale,
   t,
 }: {
   step: ScenarioStep;
+  /** `<card>-<step>`: the quote page fills in this step's application (D-059). */
+  demo: string;
   label: string;
   panel: DemoPanelData;
   locale: Locale;
@@ -278,8 +283,21 @@ function StepAction({
   const href =
     scenarioHref(step, locale) ??
     (record
-      ? `/${locale}/${record.kind === 'contract' ? 'contracts' : 'quotes'}/${record.id}`
+      ? `/${locale}/${record.kind === 'contract' ? 'contracts' : 'quotes'}/${record.id}${
+          record.kind === 'quote' && step.preset?.application ? `?demo=${demo}` : ''
+        }`
       : null);
+  const { preset } = step;
+  const status = panel.assets.find((a) => a.id === step.target.assetId)?.status;
+  const prepare: DemoPrepare | undefined = preset?.quote
+    ? {
+        assetId: step.target.assetId,
+        // A second run finds the item re-listed already: just quote it again.
+        ...(preset.relist && status === 'returned' ? { relist: preset.relist } : {}),
+        quote: preset.quote,
+        demo,
+      }
+    : undefined;
   if (!href) {
     return (
       <p className="max-w-xs rounded-lg border border-dashed border-line px-3 py-1.5 text-sm text-muted">
@@ -292,6 +310,7 @@ function StepAction({
       locale={locale}
       asOf={step.asOf}
       href={href}
+      prepare={prepare}
       label={`${label} · ${formatIsoDate(step.asOf, locale)}`}
     />
   );
