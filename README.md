@@ -1,6 +1,6 @@
 # Lease Loop · Northfina × Hive Helsinki hackathon
 
-> **Final submission.** This is our team's entry for the **Lease Loop** challenge, 5–6 November 2026 at Hive Helsinki. The hackathon is over and the repo is kept as it was handed in, for anyone curious to see or run the project.
+> **Final submission.** This is my entry as a solo participant for the **Lease Loop** challenge, 5–6 November 2026 at Hive Helsinki. The hackathon is over and the repo is kept as it was handed in, for anyone curious to see or run the project.
 
 The challenge: build a circular-economy leasing app where one e-bike, laptop or tractor lives three lives. Our Lease Loop takes an item from the catalogue to a price, an application, a signed contract and monthly invoices, then back again as a refurbished, re-priced second-life item. Every cent is calculated by plain rules and tested, and the customer always sees how their price was made.
 
