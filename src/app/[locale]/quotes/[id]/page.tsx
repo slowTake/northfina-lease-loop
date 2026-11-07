@@ -7,6 +7,7 @@ import { connection } from 'next/server';
 import { ApplicationForm } from '@/components/application-form';
 import { PriceCheckNotice, QuoteSummary } from '@/components/quote-summary';
 import { CategoryArt } from '@/components/ui/category-art';
+import { findStepPreset } from '@/domain/demo-scenarios';
 import { answersFromCustomer } from '@/domain/persona';
 import { formatIsoDate } from '@/i18n/format';
 import { getT, type MessageKey } from '@/i18n/get-t';
@@ -24,8 +25,14 @@ export async function generateMetadata({
   return isLocale(locale) ? { title: getT(locale)('quote.title', { id }) } : {};
 }
 
-export default async function QuotePage({ params }: PageProps<'/[locale]/quotes/[id]'>) {
+export default async function QuotePage({
+  params,
+  searchParams,
+}: PageProps<'/[locale]/quotes/[id]'>) {
   const { locale, id } = await params;
+  // `?demo=<card>-<step>`: the demo panel opened this quote, so fill in that card (D-059).
+  const { demo } = await searchParams;
+  const preset = findStepPreset(typeof demo === 'string' ? demo : undefined)?.application ?? null;
   if (!isLocale(locale) || !/^\d+$/.test(id)) notFound();
   await connection();
 
@@ -123,6 +130,7 @@ export default async function QuotePage({ params }: PageProps<'/[locale]/quotes/
           }}
           monthlyNetRentCents={quote.monthlyNetRentCents}
           offer={offer}
+          preset={preset}
         />
       )}
     </div>

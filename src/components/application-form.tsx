@@ -37,6 +37,8 @@ export type ApplicationFormProps = {
   monthlyNetRentCents: number;
   /** Today's lower rent, when the price list has dropped since the quote (D-014). */
   offer: { monthlyNetRentCents: number; savingPerMonthCents: number } | null;
+  /** A demo card's customer and answers, filled in when the page opens (D-059). */
+  preset?: { customerId: string; answers: Answers } | null;
 };
 
 /** What the person typed, per question id. Turned into answers by `toAnswers`. */
@@ -49,10 +51,14 @@ export function ApplicationForm(props: ApplicationFormProps) {
   const { locale, questions, deal } = props;
   const t = getT(locale);
   const router = useRouter();
-  const [drafts, setDrafts] = useState<Drafts>({});
-  const [personaId, setPersonaId] = useState('');
+  // Lazy: the preset fills the form once, on the first render; after that it's the person's.
+  const [initial] = useState(() =>
+    fillAs(props.personas, questions, deal, props.preset?.customerId ?? '', props.preset?.answers)
+  );
+  const [drafts, setDrafts] = useState<Drafts>(initial.drafts);
+  const [personaId, setPersonaId] = useState(initial.personaId);
   // Answers the person has seen on screen; only those get the "set aside" note when dropped.
-  const [shown, setShown] = useState<readonly string[]>([]);
+  const [shown, setShown] = useState<readonly string[]>(initial.shown);
   const [signing, setSigning] = useState<Signing>('idle');
   const [refusal, setRefusal] = useState<string | undefined>(undefined);
   const personaFieldId = useId();
@@ -86,13 +92,11 @@ export function ApplicationForm(props: ApplicationFormProps) {
   });
 
   function choosePersona(id: string) {
-    setPersonaId(id);
+    const filled = fillAs(props.personas, questions, deal, id);
+    setPersonaId(filled.personaId);
     setSigning('idle');
-    const persona = props.personas.find((p) => p.id === id);
-    const filled = persona ? toDrafts(persona.answers) : {};
-    setDrafts(filled);
-    const visible = askedQuestions(questions, deal, persona?.answers ?? {}).map((q) => q.id);
-    setShown(visible.filter((id) => filled[id] !== undefined));
+    setDrafts(filled.drafts);
+    setShown(filled.shown);
   }
 
   function answer(id: string, text: string) {
@@ -516,6 +520,28 @@ function toAnswers(questions: readonly Question[], drafts: Drafts): Answers {
     else answers[id] = text;
   }
   return answers;
+}
+
+/**
+ * The form filled as persona `id` (none for an unknown id), plus `extra` answers for the questions
+ * their record doesn't hold. Record answers win: the server refuses anything else (D-031).
+ */
+function fillAs(
+  personas: readonly Persona[],
+  questions: readonly Question[],
+  deal: Deal,
+  id: string,
+  extra: Answers = {}
+): { personaId: string; drafts: Drafts; shown: string[] } {
+  const persona = personas.find((p) => p.id === id);
+  const answers = persona ? { ...extra, ...persona.answers } : {};
+  const drafts = toDrafts(answers);
+  const visible = askedQuestions(questions, deal, answers).map((q) => q.id);
+  return {
+    personaId: persona ? id : '',
+    drafts,
+    shown: visible.filter((q) => drafts[q] !== undefined),
+  };
 }
 
 /** A persona's answers → what the form fields show. */
