@@ -11,7 +11,7 @@ You are helping a hackathon team build **Lease Loop**. The challenge is in `CHAL
 - **UI strings** go in `src/i18n/messages/{en,fi,sv,et}.json`, with the same keys in all four.
 - **Files stay under 600 lines.** Split by responsibility.
 - **Commits** use conventional messages: `type(scope): subject`. Never use `git commit --no-verify` or `git push --no-verify`. If a hook fails, fix the cause.
-- Before saying a change is done, run `npm run check:all`; it's what CI runs.
+- Before saying a change is done, run `npm run check:all`. There is no CI (D-060): this is the only check before merge.
 - Read `data/DATA.md` before using the data pack. Schemas for every data file are in `src/data/schemas.ts`.
 
 <!-- BEGIN:nextjs-agent-rules -->

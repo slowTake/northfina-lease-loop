@@ -52,7 +52,6 @@ npm run dev
 ## Engineering
 
 - [ ] `npm run check:all` passes locally
-- [ ] CI is green on our last commit (Actions enabled in our fork)
 - [ ] No `--no-verify` was used
 - [ ] No AI, ML or LLM features inside the app
 
